@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Book, 
-  BookCheckout, 
-  BookReturn, 
+  BookCopy, 
+  BookOpen, 
   Home, 
   Layers, 
   Library, 
@@ -44,8 +44,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: "User Management", icon: <Users size={18} />, path: "/users" },
     { name: "Membership", icon: <Library size={18} />, path: "/membership" },
     { name: "Reports", icon: <BarChart3 size={18} />, path: "/reports" },
-    { name: "Issue Book", icon: <BookCheckout size={18} />, path: "/issue-book" },
-    { name: "Return Book", icon: <BookReturn size={18} />, path: "/return-book" },
+    { name: "Issue Book", icon: <BookCopy size={18} />, path: "/issue-book" },
+    { name: "Return Book", icon: <BookOpen size={18} />, path: "/return-book" },
     { name: "Search Books", icon: <Search size={18} />, path: "/search" },
     { name: "Settings", icon: <Settings size={18} />, path: "/settings" },
   ];
@@ -54,8 +54,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const userNav = [
     { name: "Dashboard", icon: <Home size={18} />, path: "/" },
     { name: "Search Books", icon: <Search size={18} />, path: "/search" },
-    { name: "Issue Book", icon: <BookCheckout size={18} />, path: "/issue-book" },
-    { name: "Return Book", icon: <BookReturn size={18} />, path: "/return-book" },
+    { name: "Issue Book", icon: <BookCopy size={18} />, path: "/issue-book" },
+    { name: "Return Book", icon: <BookOpen size={18} />, path: "/return-book" },
     { name: "Reports", icon: <BarChart3 size={18} />, path: "/reports" },
   ];
 

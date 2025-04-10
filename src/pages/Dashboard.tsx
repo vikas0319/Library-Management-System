@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { Book, Users, BookCheckout, BookReturn, ArrowUp, ArrowDown } from "lucide-react";
+import { Book, Users, BookCheck, BookOpen, ArrowUp, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLibrary } from "@/contexts/LibraryContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,7 +86,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="flex justify-between items-center">
               <div className="text-3xl font-bold">{totalBooks - availableBooks}</div>
-              <BookCheckout className="h-8 w-8 text-green-500 opacity-70" />
+              <BookCheck className="h-8 w-8 text-green-500 opacity-70" />
             </div>
             <p className="text-xs text-muted-foreground mt-2 flex items-center">
               <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
@@ -102,7 +102,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="flex justify-between items-center">
               <div className="text-3xl font-bold">{overdueBooks}</div>
-              <BookReturn className="h-8 w-8 text-red-500 opacity-70" />
+              <BookOpen className="h-8 w-8 text-red-500 opacity-70" />
             </div>
             <p className="text-xs text-muted-foreground mt-2 flex items-center">
               <ArrowDown className="h-3 w-3 text-green-500 mr-1" />

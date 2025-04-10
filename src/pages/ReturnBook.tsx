@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Search, BookReturn, DollarSign } from "lucide-react";
+import { Calendar as CalendarIcon, Search, BookOpen, DollarSign } from "lucide-react";
 import { useLibrary, BookTransaction } from "@/contexts/LibraryContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
