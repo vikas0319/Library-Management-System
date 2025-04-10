@@ -10,9 +10,9 @@ import {
   Library, 
   LogOut, 
   Search, 
-  Settings, 
   Users, 
-  BarChart3 
+  BarChart3, 
+  FileBarChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -43,11 +43,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: "Book Management", icon: <Book size={18} />, path: "/books" },
     { name: "User Management", icon: <Users size={18} />, path: "/users" },
     { name: "Membership", icon: <Library size={18} />, path: "/membership" },
-    { name: "Reports", icon: <BarChart3 size={18} />, path: "/reports" },
+    { name: "Reports", icon: <FileBarChart size={18} />, path: "/reports" },
     { name: "Issue Book", icon: <BookCopy size={18} />, path: "/issue-book" },
     { name: "Return Book", icon: <BookOpen size={18} />, path: "/return-book" },
-    { name: "Search Books", icon: <Search size={18} />, path: "/search" },
-    { name: "Settings", icon: <Settings size={18} />, path: "/settings" },
+    { name: "Search Books", icon: <Search size={18} />, path: "/search" }
   ];
 
   // User navigation items
@@ -55,8 +54,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: "Dashboard", icon: <Home size={18} />, path: "/" },
     { name: "Search Books", icon: <Search size={18} />, path: "/search" },
     { name: "Issue Book", icon: <BookCopy size={18} />, path: "/issue-book" },
-    { name: "Return Book", icon: <BookOpen size={18} />, path: "/return-book" },
-    { name: "Reports", icon: <BarChart3 size={18} />, path: "/reports" },
+    { name: "Return Book", icon: <BookOpen size={18} />, path: "/return-book" }
   ];
 
   // Use appropriate nav based on user role

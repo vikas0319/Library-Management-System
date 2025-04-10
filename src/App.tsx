@@ -16,6 +16,8 @@ import IssueBook from "./pages/IssueBook";
 import ReturnBook from "./pages/ReturnBook";
 import BookManagement from "./pages/BookManagement";
 import Membership from "./pages/Membership";
+import UserManagement from "./pages/UserManagement";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 // Admin-only route wrapper
@@ -109,6 +111,22 @@ const App = () => {
                     element={
                       <AdminRoute>
                         <Membership />
+                      </AdminRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/users" 
+                    element={
+                      <AdminRoute>
+                        <UserManagement />
+                      </AdminRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/reports" 
+                    element={
+                      <AdminRoute>
+                        <Reports />
                       </AdminRoute>
                     } 
                   />
