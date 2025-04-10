@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 import { addDays } from "date-fns";
@@ -49,6 +48,7 @@ type LibraryContextType = {
   searchBooks: (query: string) => Book[];
   addMember: (member: Omit<Member, "id" | "joinDate" | "expiryDate">) => void;
   updateMember: (id: string, memberData: Partial<Member>) => void;
+  deleteMember: (id: string) => void;
   findMemberByNumber: (membershipNumber: string) => Member | undefined;
   issueBook: (bookId: string, memberId: string, returnDate: Date, remarks: string) => boolean;
   returnBook: (transactionId: string, actualReturnDate: Date) => { success: boolean; fine: number; transactionId: string };
@@ -351,6 +351,22 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({
     return transactions.filter((transaction) => transaction.memberId === memberId);
   };
 
+  // Add delete member function
+  const deleteMember = (id: string) => {
+    // Check if member has any active transactions
+    const activeTransactions = transactions.filter(
+      transaction => transaction.memberId === id && !transaction.actualReturnDate
+    );
+
+    if (activeTransactions.length > 0) {
+      toast.error("Cannot delete member with active transactions");
+      return;
+    }
+
+    setMembers(members.filter(member => member.id !== id));
+    toast.success("Member deleted successfully");
+  };
+
   const value = {
     books,
     members,
@@ -360,6 +376,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({
     searchBooks,
     addMember,
     updateMember,
+    deleteMember,
     findMemberByNumber,
     issueBook,
     returnBook,

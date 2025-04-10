@@ -1,346 +1,366 @@
+
 import { useState } from "react";
-import { format, addMonths, addYears } from "date-fns";
-import { Calendar as CalendarIcon, Check, User, UserPlus, X } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useLibrary, Member } from "@/contexts/LibraryContext";
-import { Button } from "@/components/ui/button";
+import { useLibrary } from "@/contexts/LibraryContext";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { format, addMonths, addYears } from "date-fns";
 import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-const addMemberSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Invalid email address.",
-  }),
-  phone: z.string().regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, {
-    message: "Invalid phone number.",
-  }),
-  address: z.string().min(5, {
-    message: "Address must be at least 5 characters.",
-  }),
-  membershipType: z.enum(["6months", "1year", "2years"]),
-});
-
-const editMemberSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Invalid email address.",
-  }),
-  phone: z.string().regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, {
-    message: "Invalid phone number.",
-  }),
-  address: z.string().min(5, {
-    message: "Address must be at least 5 characters.",
-  }),
-  active: z.boolean(),
-});
-
-const Membership = () => {
-  const { members, addMember, updateMember, deleteMember } = useLibrary();
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+export default function Membership() {
+  const { members, addMember, updateMember, findMemberByNumber, deleteMember } = useLibrary();
+  const [activeTab, setActiveTab] = useState("add");
+  const [searchNumber, setSearchNumber] = useState("");
+  const [selectedMember, setSelectedMember] = useState<any>(null);
   
-  const formAdd = useForm<z.infer<typeof addMemberSchema>>({
-    resolver: zodResolver(addMemberSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      membershipType: "6months",
-    },
+  // Add Member Form State
+  const [newMember, setNewMember] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    membershipNumber: `M${Math.floor(10000 + Math.random() * 90000)}`,
+    membershipType: "6months" as "6months" | "1year" | "2years",
+    active: true,
   });
   
-  const formEdit = useForm<z.infer<typeof editMemberSchema>>({
-    resolver: zodResolver(editMemberSchema),
-    defaultValues: selectedMember || {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      active: true,
-    },
-    values: selectedMember || {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      active: true,
-    },
-    mode: "onChange",
-    shouldUnregister: false,
-  });
+  // Update Member Form State
+  const [updateType, setUpdateType] = useState<"extend" | "cancel">("extend");
+  const [extensionType, setExtensionType] = useState<"6months" | "1year" | "2years">("6months");
   
-  const handleAddMember = (data: z.infer<typeof addMemberSchema>) => {
-    // Generate a unique membership number
-    const membershipNumber = `MEM${Date.now().toString().slice(-6)}`;
-    
-    // Calculate expiry date based on membership type
-    const joinDate = new Date();
-    let expiryDate = new Date();
-    
-    if (data.membershipType === "6months") {
-      expiryDate = addMonths(joinDate, 6);
-    } else if (data.membershipType === "1year") {
-      expiryDate = addYears(joinDate, 1);
-    } else {
-      expiryDate = addYears(joinDate, 2);
+  const handleAddMember = () => {
+    // Validate form
+    if (!newMember.name || !newMember.email || !newMember.phone || !newMember.address) {
+      toast.error("Please fill in all required fields");
+      return;
     }
     
-    // Add new member
-    addMember({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      membershipNumber,
-      membershipType: data.membershipType,
-      active: true
-    });
+    addMember(newMember);
     
-    // Reset form and show success message
-    formAdd.reset();
-    toast.success(`Membership created successfully for ${data.name}`);
+    // Reset form
+    setNewMember({
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      membershipNumber: `M${Math.floor(10000 + Math.random() * 90000)}`,
+      membershipType: "6months",
+      active: true,
+    });
   };
   
-  const handleEditMember = (data: z.infer<typeof editMemberSchema>) => {
+  const handleSearchMember = () => {
+    if (!searchNumber) {
+      toast.error("Please enter a membership number");
+      return;
+    }
+    
+    const member = findMemberByNumber(searchNumber);
+    if (member) {
+      setSelectedMember(member);
+    } else {
+      toast.error("Member not found");
+      setSelectedMember(null);
+    }
+  };
+  
+  const handleDeleteMember = (id: string) => {
+    deleteMember(id);
+    setSelectedMember(null);
+    setSearchNumber("");
+  };
+  
+  const handleUpdateMember = () => {
     if (!selectedMember) return;
     
-    updateMember({
-      id: selectedMember.id,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      membershipNumber: selectedMember.membershipNumber,
-      membershipType: selectedMember.membershipType,
-      active: data.active,
-    });
+    if (updateType === "extend") {
+      let newExpiryDate;
+      
+      switch (extensionType) {
+        case "6months":
+          newExpiryDate = addMonths(new Date(), 6);
+          break;
+        case "1year":
+          newExpiryDate = addYears(new Date(), 1);
+          break;
+        case "2years":
+          newExpiryDate = addYears(new Date(), 2);
+          break;
+      }
+      
+      updateMember(selectedMember.id, { 
+        expiryDate: newExpiryDate, 
+        active: true 
+      });
+      
+      toast.success("Membership extended successfully");
+    } else {
+      // Cancel membership
+      updateMember(selectedMember.id, { active: false });
+      toast.success("Membership cancelled");
+    }
     
+    // Reset selected member
     setSelectedMember(null);
-    toast.success(`Membership updated successfully for ${data.name}`);
-  };
-  
-  const handleDeleteClick = (member: Member) => {
-    setSelectedMember(member);
-    setIsDeleteDialogOpen(true);
-  };
-  
-  const handleConfirmDelete = () => {
-    if (!selectedMember) return;
-    
-    deleteMember(selectedMember.id);
-    setIsDeleteDialogOpen(false);
-    setSelectedMember(null);
-    toast.success("Member deleted successfully");
+    setSearchNumber("");
   };
   
   return (
     <div className="page-container">
-      <h1 className="section-title">Membership Management</h1>
+      <h1 className="section-title mb-6">Membership Management</h1>
       
-      <Tabs defaultValue="add" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="add">Add Member</TabsTrigger>
-          <TabsTrigger value="edit" disabled={members.length === 0}>Edit Member</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="add">Add Membership</TabsTrigger>
+          <TabsTrigger value="update">Update Membership</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="add" className="space-y-4">
+        <TabsContent value="add">
           <Card>
-            <CardContent className="p-6">
-              <form onSubmit={formAdd.handleSubmit(handleAddMember)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" placeholder="John Doe" {...formAdd.register("name")} />
-                    {formAdd.formState.errors.name && (
-                      <p className="text-sm text-red-500">{formAdd.formState.errors.name.message}</p>
-                    )}
+            <CardHeader>
+              <CardTitle>Add New Member</CardTitle>
+              <CardDescription>Create a new library membership</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="membershipNumber">Membership Number</Label>
+                    <Input 
+                      id="membershipNumber" 
+                      value={newMember.membershipNumber} 
+                      disabled 
+                      className="bg-muted"
+                    />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" placeholder="john.doe@example.com" {...formAdd.register("email")} />
-                    {formAdd.formState.errors.email && (
-                      <p className="text-sm text-red-500">{formAdd.formState.errors.email.message}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" placeholder="+15551234567" {...formAdd.register("phone")} />
-                    {formAdd.formState.errors.phone && (
-                      <p className="text-sm text-red-500">{formAdd.formState.errors.phone.message}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="123 Main St, Anytown" {...formAdd.register("address")} />
-                    {formAdd.formState.errors.address && (
-                      <p className="text-sm text-red-500">{formAdd.formState.errors.address.message}</p>
-                    )}
+                  <div>
+                    <Label htmlFor="name" className="text-right">Name*</Label>
+                    <Input 
+                      id="name" 
+                      value={newMember.name} 
+                      onChange={(e) => setNewMember({...newMember, name: e.target.value})}
+                      required
+                    />
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="membershipType">Membership Type</Label>
-                  <RadioGroup defaultValue="6months" {...formAdd.register("membershipType")}>
+                <div>
+                  <Label htmlFor="email">Email Address*</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    value={newMember.email} 
+                    onChange={(e) => setNewMember({...newMember, email: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="phone">Phone Number*</Label>
+                  <Input 
+                    id="phone" 
+                    value={newMember.phone} 
+                    onChange={(e) => setNewMember({...newMember, phone: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="address">Address*</Label>
+                  <Input 
+                    id="address" 
+                    value={newMember.address} 
+                    onChange={(e) => setNewMember({...newMember, address: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label>Membership Type</Label>
+                  <RadioGroup 
+                    defaultValue="6months"
+                    value={newMember.membershipType}
+                    onValueChange={(value) => 
+                      setNewMember({
+                        ...newMember, 
+                        membershipType: value as "6months" | "1year" | "2years"
+                      })
+                    }
+                    className="flex space-x-4 pt-2"
+                  >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="6months" id="6months" />
-                      <Label htmlFor="6months">6 Months</Label>
+                      <Label htmlFor="6months" className="cursor-pointer">6 Months</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="1year" id="1year" />
-                      <Label htmlFor="1year">1 Year</Label>
+                      <Label htmlFor="1year" className="cursor-pointer">1 Year</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="2years" id="2years" />
-                      <Label htmlFor="2years">2 Years</Label>
+                      <Label htmlFor="2years" className="cursor-pointer">2 Years</Label>
                     </div>
                   </RadioGroup>
                 </div>
-                
-                <Button type="submit" className="bg-library-accent hover:bg-library-light-accent">
-                  Add Member
-                </Button>
-              </form>
+              </div>
             </CardContent>
+            <CardFooter>
+              <Button onClick={handleAddMember}>Add Member</Button>
+            </CardFooter>
           </Card>
         </TabsContent>
         
-        <TabsContent value="edit" className="space-y-4">
-          {members.length === 0 ? (
-            <p>No members to edit. Please add a member first.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="memberSelect">Select Member</Label>
-                <select
-                  id="memberSelect"
-                  className="w-full p-2 border rounded-md"
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const member = members.find((m) => m.id === selectedId);
-                    setSelectedMember(member || null);
-                    
-                    if (member) {
-                      formEdit.reset(member);
-                    }
-                  }}
-                  value={selectedMember?.id || ""}
-                >
-                  <option value="">Select a member</option>
-                  {members.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name} ({member.membershipNumber})
-                    </option>
-                  ))}
-                </select>
+        <TabsContent value="update">
+          <Card>
+            <CardHeader>
+              <CardTitle>Update Membership</CardTitle>
+              <CardDescription>Extend or cancel an existing membership</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex mb-4 space-x-2">
+                <Input 
+                  placeholder="Enter Membership Number" 
+                  value={searchNumber}
+                  onChange={(e) => setSearchNumber(e.target.value)}
+                  className="max-w-sm"
+                />
+                <Button onClick={handleSearchMember}>Search</Button>
               </div>
               
               {selectedMember && (
-                <Card>
-                  <CardContent className="p-6">
-                    <form onSubmit={formEdit.handleSubmit(handleEditMember)} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input id="name" placeholder="John Doe" {...formEdit.register("name")} />
-                        {formEdit.formState.errors.name && (
-                          <p className="text-sm text-red-500">{formEdit.formState.errors.name.message}</p>
-                        )}
+                <div className="mt-4 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Name</Label>
+                      <div className="p-2 border rounded bg-muted">{selectedMember.name}</div>
+                    </div>
+                    <div>
+                      <Label>Membership Number</Label>
+                      <div className="p-2 border rounded bg-muted">{selectedMember.membershipNumber}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Join Date</Label>
+                      <div className="p-2 border rounded bg-muted">
+                        {format(new Date(selectedMember.joinDate), 'PPP')}
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" placeholder="john.doe@example.com" {...formEdit.register("email")} />
-                        {formEdit.formState.errors.email && (
-                          <p className="text-sm text-red-500">{formEdit.formState.errors.email.message}</p>
-                        )}
+                    </div>
+                    <div>
+                      <Label>Expiry Date</Label>
+                      <div className={cn("p-2 border rounded", 
+                        new Date(selectedMember.expiryDate) < new Date() 
+                          ? "bg-red-100 text-red-800" 
+                          : "bg-muted"
+                      )}>
+                        {format(new Date(selectedMember.expiryDate), 'PPP')}
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone</Label>
-                        <Input id="phone" placeholder="+15551234567" {...formEdit.register("phone")} />
-                        {formEdit.formState.errors.phone && (
-                          <p className="text-sm text-red-500">{formEdit.formState.errors.phone.message}</p>
-                        )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Email</Label>
+                      <div className="p-2 border rounded bg-muted">{selectedMember.email}</div>
+                    </div>
+                    <div>
+                      <Label>Status</Label>
+                      <div className={cn("p-2 border rounded font-medium", 
+                        selectedMember.active 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-red-100 text-red-800"
+                      )}>
+                        {selectedMember.active ? "Active" : "Inactive"}
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
-                        <Input id="address" placeholder="123 Main St, Anytown" {...formEdit.register("address")} />
-                        {formEdit.formState.errors.address && (
-                          <p className="text-sm text-red-500">{formEdit.formState.errors.address.message}</p>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="active">Active</Label>
-                        <div className="flex items-center space-x-2">
-                          <input type="checkbox" id="active" {...formEdit.register("active")} className="h-5 w-5" />
-                          <Label htmlFor="active">Active</Label>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => handleDeleteClick(selectedMember)}
+                    </div>
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <div className="flex space-x-4 mb-2">
+                      <Button 
+                        variant={updateType === "extend" ? "default" : "outline"}
+                        onClick={() => setUpdateType("extend")}
+                        className="flex-1"
+                      >
+                        Extend Membership
+                      </Button>
+                      <Button 
+                        variant={updateType === "cancel" ? "default" : "outline"}
+                        onClick={() => setUpdateType("cancel")}
+                        className="flex-1"
+                      >
+                        Cancel Membership
+                      </Button>
+                    </div>
+                    
+                    {updateType === "extend" && (
+                      <div className="mt-4">
+                        <Label>Extension Duration</Label>
+                        <RadioGroup 
+                          defaultValue="6months"
+                          value={extensionType}
+                          onValueChange={(value) => 
+                            setExtensionType(value as "6months" | "1year" | "2years")
+                          }
+                          className="flex space-x-4 pt-2"
                         >
-                          Delete Member
-                        </Button>
-                        <Button type="submit" className="bg-library-accent hover:bg-library-light-accent">
-                          Update Member
-                        </Button>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="6months" id="extend6months" />
+                            <Label htmlFor="extend6months" className="cursor-pointer">6 Months</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="1year" id="extend1year" />
+                            <Label htmlFor="extend1year" className="cursor-pointer">1 Year</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="2years" id="extend2years" />
+                            <Label htmlFor="extend2years" className="cursor-pointer">2 Years</Label>
+                          </div>
+                        </RadioGroup>
                       </div>
-                    </form>
-                  </CardContent>
-                </Card>
+                    )}
+                  </div>
+                </div>
               )}
-            </div>
-          )}
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              {selectedMember && (
+                <>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">Delete Member</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the member
+                          and remove their data from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteMember(selectedMember.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Button onClick={handleUpdateMember}>
+                    {updateType === "extend" ? "Extend Membership" : "Cancel Membership"}
+                  </Button>
+                </>
+              )}
+            </CardFooter>
+          </Card>
         </TabsContent>
       </Tabs>
-      
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Member</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this member? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
-};
-
-export default Membership;
+}
